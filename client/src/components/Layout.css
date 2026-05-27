@@ -1,0 +1,96 @@
+.layout { display: flex; flex-direction: column; min-height: 100vh; }
+
+.topbar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: var(--shadow);
+}
+
+.logo { font-size: 18px; font-weight: 600; color: var(--accent); }
+.topbar-left { display: flex; align-items: center; gap: 16px; }
+.topbar-date { font-size: 13px; color: var(--muted); }
+.topbar-right { display: flex; align-items: center; gap: 12px; }
+.user-name { font-size: 14px; font-weight: 500; }
+.btn-logout {
+  font-size: 13px;
+  padding: 5px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: none;
+  cursor: pointer;
+  color: var(--muted);
+  transition: all .2s;
+}
+.btn-logout:hover { background: #FEF2F2; color: var(--danger); border-color: #FCA5A5; }
+
+.main-body { display: flex; flex: 1; }
+
+.sidebar {
+  width: 200px;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  padding: 16px 8px;
+  position: sticky;
+  top: 57px;
+  height: calc(100vh - 57px);
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 10px;
+  text-decoration: none;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 2px;
+  transition: all .15s;
+}
+.nav-item:hover { background: var(--bg); color: var(--text); }
+.nav-item.active { background: var(--accent-light); color: var(--accent-dark); }
+.nav-icon { font-size: 18px; }
+
+.page-content { flex: 1; padding: 24px; max-width: 900px; overflow-y: auto; }
+
+.bottom-nav { display: none; }
+
+@media (max-width: 768px) {
+  .sidebar { display: none; }
+  .page-content { padding: 16px; padding-bottom: 80px; }
+  .bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    z-index: 100;
+    overflow-x: auto;
+  }
+  .bnav-item {
+    flex: 1;
+    min-width: 56px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 8px 4px;
+    text-decoration: none;
+    color: var(--muted);
+    font-size: 10px;
+    gap: 3px;
+    transition: color .15s;
+  }
+  .bnav-item.active { color: var(--accent); }
+}
