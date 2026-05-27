@@ -3,6 +3,9 @@ import axios from 'axios';
 
 const AuthContext = createContext();
 
+
+axios.defaults.baseURL = process.env.REACT_APP_API_URL || '/api';
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(localStorage.getItem('fittrack_token'));
@@ -11,9 +14,14 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     if (token) {
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      axios.get('/api/profile')
+      axios.get('/profile')
         .then(res => setUser(res.data))
-        .catch(() => logout())
+        .catch(() => {
+         
+          localStorage.removeItem('fittrack_token');
+          setToken(null);
+          setUser(null);
+        })
         .finally(() => setLoading(false));
     } else {
       setLoading(false);
@@ -21,7 +29,7 @@ export const AuthProvider = ({ children }) => {
   }, [token]);
 
   const login = async (email, password) => {
-    const res = await axios.post('/api/auth/login', { email, password });
+    const res = await axios.post('/auth/login', { email, password });
     const { token: t, user: u } = res.data;
     localStorage.setItem('fittrack_token', t);
     axios.defaults.headers.common['Authorization'] = `Bearer ${t}`;
@@ -31,7 +39,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const register = async (name, email, password) => {
-    const res = await axios.post('/api/auth/register', { name, email, password });
+    const res = await axios.post('/auth/register', { name, email, password });
     const { token: t, user: u } = res.data;
     localStorage.setItem('fittrack_token', t);
     axios.defaults.headers.common['Authorization'] = `Bearer ${t}`;
@@ -48,7 +56,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const refreshProfile = async () => {
-    const res = await axios.get('/api/profile');
+    const res = await axios.get('/profile');
     setUser(res.data);
     return res.data;
   };

@@ -12,18 +12,38 @@ import Schedule from './pages/Schedule';
 import Diet from './pages/Diet';
 import Profile from './pages/Profile';
 
-// ✅ Fixed: actually checks auth before allowing access
 function ProtectedRoute({ children }) {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+
+  // ✅ Fix: wait for auth check to finish before redirecting
+  if (loading) return (
+    <div style={{
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      height: '100vh', fontSize: 16, color: '#6B7280'
+    }}>
+      Loading...
+    </div>
+  );
+
   if (!user) return <Navigate to="/login" replace />;
   return <Layout>{children}</Layout>;
 }
 
 function AppRoutes() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+
+  // ✅ Fix: don't render routes until auth state is known
+  if (loading) return (
+    <div style={{
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      height: '100vh', fontSize: 16, color: '#6B7280'
+    }}>
+      Loading...
+    </div>
+  );
+
   return (
     <Routes>
-      {/* ✅ Fixed: renders Auth page, redirects to home if already logged in */}
       <Route
         path="/login"
         element={user ? <Navigate to="/" replace /> : <Auth />}
