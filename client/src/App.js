@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Layout from './components/Layout';
 import Auth from './pages/Auth';
@@ -12,17 +12,22 @@ import Schedule from './pages/Schedule';
 import Diet from './pages/Diet';
 import Profile from './pages/Profile';
 
+// ✅ Fixed: actually checks auth before allowing access
 function ProtectedRoute({ children }) {
-  const { user, loading } = useAuth();
-  if (loading) return <div style={{ display:'flex',alignItems:'center',justifyContent:'center',height:'100vh',fontSize:14,color:'#6B7280' }}>Loading...</div>;
-  return user ? <Layout>{children}</Layout> : <Navigate to="/login" replace />;
+  const { user } = useAuth();
+  if (!user) return <Navigate to="/login" replace />;
+  return <Layout>{children}</Layout>;
 }
 
 function AppRoutes() {
   const { user } = useAuth();
   return (
     <Routes>
-      <Route path="/login" element={user ? <Navigate to="/" replace /> : <Auth />} />
+      {/* ✅ Fixed: renders Auth page, redirects to home if already logged in */}
+      <Route
+        path="/login"
+        element={user ? <Navigate to="/" replace /> : <Auth />}
+      />
       <Route path="/"         element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
       <Route path="/steps"    element={<ProtectedRoute><Steps /></ProtectedRoute>} />
       <Route path="/calories" element={<ProtectedRoute><Calories /></ProtectedRoute>} />
@@ -31,7 +36,7 @@ function AppRoutes() {
       <Route path="/schedule" element={<ProtectedRoute><Schedule /></ProtectedRoute>} />
       <Route path="/diet"     element={<ProtectedRoute><Diet /></ProtectedRoute>} />
       <Route path="/profile"  element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="*"         element={<Navigate to="/" replace />} />
     </Routes>
   );
 }
@@ -39,9 +44,7 @@ function AppRoutes() {
 export default function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
-        <AppRoutes />
-      </BrowserRouter>
+      <AppRoutes />
     </AuthProvider>
   );
 }

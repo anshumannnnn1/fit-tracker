@@ -11,7 +11,13 @@ router.get('/:date', auth, async (req, res) => {
 
 router.post('/', auth, async (req, res) => {
   try {
-    const food = await Food.create({ ...req.body, user: req.user.id });
+    // ✅ Fixed: destructure only expected fields instead of spreading raw req.body
+    const { date, name, calories, protein, carbs, fats } = req.body;
+    if (!date || !name) return res.status(400).json({ message: 'date and name are required' });
+    if (calories !== undefined && (isNaN(calories) || Number(calories) < 0))
+      return res.status(400).json({ message: 'Invalid calories value' });
+
+    const food = await Food.create({ date, name, calories, protein, carbs, fats, user: req.user.id });
     res.json(food);
   } catch (err) { res.status(500).json({ message: err.message }); }
 });

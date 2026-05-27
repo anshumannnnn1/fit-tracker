@@ -11,7 +11,11 @@ router.get('/:date', auth, async (req, res) => {
 
 router.post('/', auth, async (req, res) => {
   try {
-    const workout = await Workout.create({ ...req.body, user: req.user.id });
+    // ✅ Fixed: destructure only expected fields instead of spreading raw req.body
+    const { date, name, duration, calories, notes } = req.body;
+    if (!date || !name) return res.status(400).json({ message: 'date and name are required' });
+
+    const workout = await Workout.create({ date, name, duration, calories, notes, user: req.user.id });
     res.json(workout);
   } catch (err) { res.status(500).json({ message: err.message }); }
 });

@@ -11,7 +11,11 @@ router.get('/:date', auth, async (req, res) => {
 
 router.post('/', auth, async (req, res) => {
   try {
-    const entry = await Schedule.create({ ...req.body, user: req.user.id });
+    // ✅ Fixed: destructure only expected fields instead of spreading raw req.body
+    const { date, time, title, notes } = req.body;
+    if (!date || !title) return res.status(400).json({ message: 'date and title are required' });
+
+    const entry = await Schedule.create({ date, time, title, notes, user: req.user.id });
     res.json(entry);
   } catch (err) { res.status(500).json({ message: err.message }); }
 });

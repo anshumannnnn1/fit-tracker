@@ -68,6 +68,7 @@
 @media (max-width: 768px) {
   .sidebar { display: none; }
   .page-content { padding: 16px; padding-bottom: 80px; }
+
   .bottom-nav {
     display: flex;
     position: fixed;
@@ -77,11 +78,15 @@
     background: var(--surface);
     border-top: 1px solid var(--border);
     z-index: 100;
+    /* ✅ Fixed: scroll horizontally instead of squishing 8 icons */
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; /* hide scrollbar Firefox */
   }
+  .bottom-nav::-webkit-scrollbar { display: none; } /* hide scrollbar Chrome/Safari */
+
   .bnav-item {
-    flex: 1;
-    min-width: 56px;
+    flex: 0 0 64px; /* ✅ Fixed: fixed width so icons don't squish */
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -91,6 +96,7 @@
     font-size: 10px;
     gap: 3px;
     transition: color .15s;
+    white-space: nowrap;
   }
   .bnav-item.active { color: var(--accent); }
 }

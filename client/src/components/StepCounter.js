@@ -1,66 +1,106 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
 
 const StepCounter = () => {
   const [steps, setSteps] = useState(0);
+  const [needsPermission, setNeedsPermission] = useState(false);
+  const [error, setError] = useState('');
 
-  useEffect(() => {
-    let lastMagnitude = 0;
-    let stepCount = 0;
+  const lastMagnitude = useRef(0);
+  const cooldown = useRef(false);
 
-    const handleMotion = async (event) => {
-      const acc = event.accelerationIncludingGravity;
+  const handleMotion = async (event) => {
+    const acc = event.accelerationIncludingGravity;
+    if (!acc) return;
 
-      if (!acc) return;
+    const magnitude = Math.sqrt(
+      (acc.x || 0) * (acc.x || 0) +
+      (acc.y || 0) * (acc.y || 0) +
+      (acc.z || 0) * (acc.z || 0)
+    );
 
-      const magnitude = Math.sqrt(
-        acc.x * acc.x +
-        acc.y * acc.y +
-        acc.z * acc.z
-      );
+    const diff = Math.abs(magnitude - lastMagnitude.current);
 
-      const diff = Math.abs(magnitude - lastMagnitude);
+    // ✅ Fixed: added cooldown to prevent false steps
+    if (diff > 6 && !cooldown.current) {
+      cooldown.current = true;
+      setSteps(prev => prev + 1);
 
-      if (diff > 6) {
-        stepCount++;
-        setSteps(stepCount);
-
-        const today = new Date().toISOString().split("T")[0];
-
-        try {
-          await axios.post(
-            "http://localhost:5000/api/steps",
-            {
-              count: 1,
-              date: today
-            },
-            {
-              headers: {
-                Authorization: `Bearer ${localStorage.getItem("token")}`
-              }
-            }
-          );
-        } catch (err) {
-          console.log(err);
-        }
+      const today = new Date().toISOString().split("T")[0];
+      try {
+        // ✅ Fixed: use relative URL instead of hardcoded IP
+        // ✅ Fixed: use correct token key "fittrack_token"
+        await axios.post(
+          '/api/steps',
+          { count: 1, date: today },
+          { headers: { Authorization: `Bearer ${localStorage.getItem("fittrack_token")}` } }
+        );
+      } catch (err) {
+        console.log(err);
       }
 
-      lastMagnitude = magnitude;
-    };
-
-    if (window.DeviceMotionEvent) {
-      window.addEventListener("devicemotion", handleMotion);
+      setTimeout(() => { cooldown.current = false; }, 400);
     }
 
-    return () => {
-      window.removeEventListener("devicemotion", handleMotion);
-    };
+    lastMagnitude.current = magnitude;
+  };
+
+  const startListening = () => {
+    window.addEventListener("devicemotion", handleMotion);
+  };
+
+  // ✅ Fixed: iOS permission must come from a button tap, not useEffect
+  const requestIOSPermission = async () => {
+    try {
+      const state = await DeviceMotionEvent.requestPermission();
+      if (state === 'granted') {
+        setNeedsPermission(false);
+        startListening();
+      } else {
+        setError('Permission denied. Enable in iOS Settings > Safari > Motion & Orientation Access.');
+      }
+    } catch (err) {
+      setError('Could not request permission: ' + err.message);
+    }
+  };
+
+  useEffect(() => {
+    if (typeof DeviceMotionEvent === 'undefined') return;
+
+    if (typeof DeviceMotionEvent.requestPermission === 'function') {
+      // iOS — show button, don't start yet
+      setNeedsPermission(true);
+    } else {
+      // Android — start directly
+      startListening();
+    }
+
+    return () => window.removeEventListener("devicemotion", handleMotion);
   }, []);
 
   return (
-    <div>
-      <h2>Steps Today</h2>
-      <h1>{steps}</h1>
+    <div style={{ padding: '12px 0' }}>
+      {needsPermission && (
+        <button
+          onClick={requestIOSPermission}
+          style={{
+            background: 'var(--accent)', color: '#fff', border: 'none',
+            padding: '10px 20px', borderRadius: 8, fontWeight: 600,
+            cursor: 'pointer', width: '100%', marginBottom: 8
+          }}
+        >
+          📱 Tap to enable step detection
+        </button>
+      )}
+      {error && (
+        <div style={{ color: 'var(--danger)', fontSize: 13, marginBottom: 8 }}>⚠️ {error}</div>
+      )}
+      {!needsPermission && !error && (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <span style={{ fontSize: 13, color: 'var(--muted)' }}>🟢 Live steps (this session)</span>
+          <span style={{ fontWeight: 700, fontSize: 18, color: 'var(--accent)' }}>{steps}</span>
+        </div>
+      )}
     </div>
   );
 };

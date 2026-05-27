@@ -13,7 +13,7 @@ api.interceptors.response.use(
   err => {
     if (err.response?.status === 401) {
       localStorage.removeItem('fittrack_token');
-      window.location.href = '/login';
+      window.location.href = '/#/login'; // ✅ Fixed: HashRouter needs /#/ prefix
     }
     return Promise.reject(err);
   }

@@ -1,8 +1,16 @@
 const router = require('express').Router();
 const jwt = require('jsonwebtoken');
+const rateLimit = require('express-rate-limit'); // ✅ npm install express-rate-limit
 const User = require('../models/User');
 
 const signToken = (id) => jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '30d' });
+
+// ✅ Added: limit login attempts to 10 per 15 minutes per IP
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: { message: 'Too many login attempts. Please try again later.' }
+});
 
 // Register
 router.post('/register', async (req, res) => {
@@ -17,8 +25,8 @@ router.post('/register', async (req, res) => {
   }
 });
 
-// Login
-router.post('/login', async (req, res) => {
+// Login — ✅ rate limiter applied
+router.post('/login', loginLimiter, async (req, res) => {
   try {
     const { email, password } = req.body;
     const user = await User.findOne({ email });
